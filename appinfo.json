@@ -1,0 +1,17 @@
+{
+  "uuid": "a812784b-59b5-4541-a54e-7f3929a3ce7e",
+  "shortName": "fancywatch",
+  "longName": "fancy watch",
+  "companyName": "Kasoki",
+  "versionCode": 1,
+  "versionLabel": "0.0.1",
+  "watchapp": {
+    "watchface": true
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
