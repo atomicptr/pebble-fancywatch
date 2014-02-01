@@ -91,6 +91,7 @@ static void window_load(Window *window) {
 /** unload window */
 static void window_unload(Window *window) {
 	text_layer_destroy(time_layer);
+	text_layer_destroy(delimiter_layer);
 	
 	// unsubscribe services
 	tick_timer_service_unsubscribe();
