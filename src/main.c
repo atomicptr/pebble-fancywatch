@@ -6,8 +6,6 @@ static void window_load(Window*);
 static void window_unload(Window*);
 static void handle_clock_tick(struct tm*, TimeUnits);
 
-static char* int_to_string(unsigned int);
-
 static Window *window;
 static TextLayer *time_layer;
 static TextLayer *delimiter_layer;
