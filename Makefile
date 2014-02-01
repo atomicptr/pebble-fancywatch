@@ -1,8 +1,11 @@
-PHONE_IP="192.168.2.105"
+PHONE_IP = "192.168.2.105"
 
-run:
+.PHONY: build install
+
+install: build
+	@echo "INSTALL FANCY WATCH"
+	pebble install --phone ${PHONE_IP}
+
+build:
+	@echo "BUILD FANCY WATCH"
 	pebble build
-	pebble install --phone ${PHONE_IP}
-
-reinstall:
-	pebble install --phone ${PHONE_IP}
