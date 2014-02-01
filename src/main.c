@@ -9,6 +9,7 @@ static void handle_clock_tick(struct tm*, TimeUnits);
 static Window *window;
 static TextLayer *time_layer;
 static TextLayer *delimiter_layer;
+static TextLayer *date_layer;
 
 /** init fancy watch */
 static void init(void) {
@@ -73,9 +74,29 @@ static void window_load(Window *window) {
 	
 	text_layer_set_text_alignment(delimiter_layer, GTextAlignmentCenter);
 
+	// setup date layer
+	date_layer = text_layer_create((GRect) {
+		.origin = {
+			0, 60
+		},
+		.size = {
+			bounds.size.w, 22
+		}
+	});
+	
+	text_layer_set_text(date_layer, "...");
+	
+	text_layer_set_text_color(date_layer, GColorWhite);
+	text_layer_set_background_color(date_layer, GColorClear);
+	
+	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	
+	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
+
 	// add children
 	layer_add_child(window_layer, text_layer_get_layer(time_layer));
 	layer_add_child(window_layer, text_layer_get_layer(delimiter_layer));
+	layer_add_child(window_layer, text_layer_get_layer(date_layer));
 	
 	// call ticker
 	time_t now = time(NULL);
@@ -92,6 +113,7 @@ static void window_load(Window *window) {
 static void window_unload(Window *window) {
 	text_layer_destroy(time_layer);
 	text_layer_destroy(delimiter_layer);
+	text_layer_destroy(date_layer);
 	
 	// unsubscribe services
 	tick_timer_service_unsubscribe();
@@ -112,6 +134,13 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	strftime(buffer, sizeof("00:00"), "%H %M", tick_time);
 
 	text_layer_set_text(time_layer, buffer);
+	
+	// print date
+	char *date_string = "XXX. XX. XXX.";
+	
+	strftime(date_string, sizeof("XXX. XX. XXX."), "%a. %d. %b.", tick_time);
+
+	text_layer_set_text(date_layer, date_string);
 }
 
 int main(void) {
