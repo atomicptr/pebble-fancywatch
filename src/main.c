@@ -10,7 +10,7 @@ static char* int_to_string(unsigned int);
 
 static Window *window;
 static TextLayer *time_layer;
-static unsigned int counter = 0;
+static TextLayer *delimiter_layer;
 
 /** init fancy watch */
 static void init(void) {
@@ -50,14 +50,34 @@ static void window_load(Window *window) {
 	text_layer_set_text(time_layer, "13:37");
 	
 	text_layer_set_text_color(time_layer, GColorWhite);
-	text_layer_set_background_color(time_layer, GColorBlack);
+	text_layer_set_background_color(time_layer, GColorClear);
 	
 	text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
 	
 	text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
 
+	// setup time delimiter
+	delimiter_layer = text_layer_create((GRect) {
+		.origin = {
+			bounds.size.w / 2 - 10, 5
+		},
+		.size = {
+			20, 50
+		}
+	});
+
+	text_layer_set_text(delimiter_layer, ":");
+	
+	text_layer_set_text_color(delimiter_layer, GColorWhite);
+	text_layer_set_background_color(delimiter_layer, GColorClear);
+	
+	text_layer_set_font(delimiter_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+	
+	text_layer_set_text_alignment(delimiter_layer, GTextAlignmentCenter);
+
 	// add children
 	layer_add_child(window_layer, text_layer_get_layer(time_layer));
+	layer_add_child(window_layer, text_layer_get_layer(delimiter_layer));
 	
 	// call ticker
 	time_t now = time(NULL);
@@ -78,14 +98,19 @@ static void window_unload(Window *window) {
 	tick_timer_service_unsubscribe();
 }
 
+/** called every second */
 static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
+	// handle delimiter animation
 	int seconds = tick_time->tm_sec;
 	
-	char *time_string = seconds % 2 == 0 ? "%H:%M" : "%H %M";
+	char *delimiter_string = seconds % 2 == 0 ? " " : ":";
 	
+	text_layer_set_text(delimiter_layer, delimiter_string);
+	
+	// print time
 	char *buffer = "00:00";
 	
-	strftime(buffer, sizeof("00:00"), time_string, tick_time);
+	strftime(buffer, sizeof("00:00"), "%H %M", tick_time);
 
 	text_layer_set_text(time_layer, buffer);
 }
