@@ -29,6 +29,7 @@ get_weather = function(longitute, latitute) {
 				"temp_fahrenheit": Number(convert_kelvin_to_fahrenheit(Number(response.main.temp)).toFixed(0))
 			};
 			
+			// send date to pebble
 			Pebble.sendAppMessage(pebble_data);
 			console.log("Send: " + JSON.stringify(pebble_data, 4) + " to pebble");
 		} else {

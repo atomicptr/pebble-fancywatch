@@ -67,6 +67,7 @@ static void init(void) {
 	window_stack_push(window, animated);
 }
 
+/** init app messages */
 static void init_app_message(void) {
 	app_message_open(64, 16);
 	
@@ -78,7 +79,7 @@ static void destroy(void) {
 	window_destroy(window);
 }
 
-/** load window */
+/** load and setup window */
 static void window_load(Window *window) {
 	window_set_background_color(window, GColorBlack);
 
@@ -189,7 +190,7 @@ static void window_unload(Window *window) {
 	app_message_deregister_callbacks();
 }
 
-/** called every second */
+/** is called every tick (every second if not low energy mode) */
 static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	charge_state = battery_state_service_peek();
 	
@@ -216,6 +217,7 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 	text_layer_set_text(date_layer, date_string);
 	
+	// handle low energy mode
 	if(!low_energy_state && low_energy) {
 		low_energy_state = true;
 	
@@ -227,18 +229,21 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	}
 }
 
+/** enter low energy mode: tick only every minute */
 static void enter_low_energy_mode(void) {
 	tick_timer_service_unsubscribe();
 	
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_clock_tick);
 }
 
+/** leave low energy mode: tick every second */
 static void leave_low_energy_mode(void) {
 	tick_timer_service_unsubscribe();
 	
 	tick_timer_service_subscribe(SECOND_UNIT, handle_clock_tick);
 }
 
+/** message from PebbleKit JS received */
 static void on_received_handler(DictionaryIterator *received, void *context) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "received information from PebbleKitJS");
 
