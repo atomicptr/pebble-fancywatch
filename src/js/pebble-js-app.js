@@ -23,10 +23,10 @@ get_weather = function(longitute, latitute) {
 			console.log("ANSWER FROM SERVER: " + request.responseText);
 			
 			var pebble_data = {
-				"0": get_icon_id(response.weather[0].icon),
-				"1": Number(Number(response.main.temp).toFixed(0)),
-				"2": Number(convert_kelvin_to_celsius(Number(response.main.temp)).toFixed(0)),
-				"3": Number(convert_kelvin_to_fahrenheit(Number(response.main.temp)).toFixed(0))
+				"icon_id": get_icon_id(response.weather[0].icon),
+				"temp_kelvin": Number(Number(response.main.temp).toFixed(0)),
+				"temp_celsius": Number(convert_kelvin_to_celsius(Number(response.main.temp)).toFixed(0)),
+				"temp_fahrenheit": Number(convert_kelvin_to_fahrenheit(Number(response.main.temp)).toFixed(0))
 			};
 			
 			Pebble.sendAppMessage(pebble_data);
