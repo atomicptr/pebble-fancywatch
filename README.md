@@ -3,6 +3,8 @@ pebble-fancywatch
 
 ## Pebble SDK 2.0 required
 
+![Fancy Watch screenshot](misc/screenshot.png)
+
 ## How to build and install "Fancy Watch"
 
 I assume that you've already set up your Pebble SDK.
