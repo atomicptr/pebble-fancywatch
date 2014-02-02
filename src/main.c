@@ -138,8 +138,6 @@ static void window_load(Window *window) {
 			bounds.size.w - IMAGE_SIZE/2, 22
 		}
 	});
-
-	text_layer_set_text(temp_layer, "...");
 	
 	text_layer_set_text_color(temp_layer, GColorWhite);
 	text_layer_set_background_color(temp_layer, GColorClear);
@@ -236,7 +234,7 @@ static void on_received_handler(DictionaryIterator *received, void *context) {
 	}
 	
 	// TODO: add option to select metric
-	int temperature = weather.temp_kelvin;
+	int temperature = weather.temp_celsius;
 	
 	// set weather text
 	char *temp_string = "XXXXX";
