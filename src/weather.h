@@ -1,0 +1,30 @@
+#ifndef __FW_WEATHER_H__
+#define __FW_WEATHER_H__
+
+enum {
+	WEATHER_MESSAGE_ICON_ID = 0,
+	WEATHER_MESSAGE_TEMP_KELVIN = 1,
+	WEATHER_MESSAGE_TEMP_CELSIUS = 2,
+	WEATHER_MESSAGE_TEMP_FAHRENHEIT = 3
+};
+
+enum {
+	WEATHER_ICON_CLEAR_DAY,
+	WEATHER_ICON_CLEAR_NIGHT,
+	WEATHER_ICON_CLOUDY,
+	WEATHER_ICON_SHOWER_RAIN,
+	WEATHER_ICON_RAIN,
+	WEATHER_ICON_THUNDERSTORM,
+	WEATHER_ICON_SNOW,
+	WEATHER_ICON_MIST,
+	WEATHER_ICON_ERROR
+};
+
+typedef struct {
+	int icon_id;
+	int temp_kelvin;
+	int temp_celsius;
+	int temp_fahrenheit;
+} weather_t;
+
+#endif
