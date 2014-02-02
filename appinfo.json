@@ -14,8 +14,50 @@
 	"resources": {
 		"media": [
 			{
-				
+				"name": "CLEAR_DAY",
+				"type": "png",
+				"file": "images/clear_day.png"
 			},
+			{
+				"name": "CLEAR_NIGHT",
+				"type": "png",
+				"file": "images/clear_night.png"
+			},
+			{
+				"name": "CLOUDY",
+				"type": "png",
+				"file": "images/cloudy.png"
+			},
+			{
+				"name": "SHOWER_RAIN",
+				"type": "png",
+				"file": "images/shower_rain.png"
+			},
+			{
+				"name": "RAIN",
+				"type": "png",
+				"file": "images/rain.png"
+			},
+			{
+				"name": "THUNDERSTORM",
+				"type": "png",
+				"file": "images/thunderstorm.png"
+			},
+			{
+				"name": "SNOW",
+				"type": "png",
+				"file": "images/snow.png"
+			},
+			{
+				"name": "MIST",
+				"type": "png",
+				"file": "images/mist.png"
+			},
+			{
+				"name": "ERROR",
+				"type": "png",
+				"file": "images/error.png"
+			}
 		]
 	}
 }
