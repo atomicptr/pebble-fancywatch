@@ -4,6 +4,8 @@
 #define IMAGE_SIZE 55
 #define NUMBER_OF_IMAGES 9
 
+#define LOW_ENERGY_CAP 20
+
 const int IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
 	RESOURCE_ID_CLEAR_DAY,
 	RESOURCE_ID_CLEAR_NIGHT,
@@ -22,6 +24,8 @@ static void window_load(Window*);
 static void window_unload(Window*);
 
 static void handle_clock_tick(struct tm*, TimeUnits);
+static void enter_low_energy_mode(void);
+static void leave_low_energy_mode(void);
 static void init_app_message(void);
 static void on_received_handler(DictionaryIterator*, void*);
 
@@ -36,6 +40,9 @@ static BitmapLayer *weather_image_layer;
 static GBitmap *weather_image;
 
 static weather_t weather;
+static BatteryChargeState charge_state;
+static bool low_energy = false;
+static bool low_energy_state = false;
 
 /** init fancy watch */
 static void init(void) {
@@ -184,11 +191,15 @@ static void window_unload(Window *window) {
 
 /** called every second */
 static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
+	charge_state = battery_state_service_peek();
+	
+	low_energy = charge_state.charge_percent <= LOW_ENERGY_CAP;
+
 	// handle delimiter animation
 	int seconds = tick_time->tm_sec;
 	
-	char *delimiter_string = seconds % 2 == 0 ? " " : ":";
-	
+	char *delimiter_string = seconds % 2 == 0 && !low_energy ? " " : ":";
+
 	text_layer_set_text(delimiter_layer, delimiter_string);
 	
 	// print time
@@ -204,6 +215,28 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	strftime(date_string, sizeof("XXX. XX. XXX."), "%a. %d. %b.", tick_time);
 
 	text_layer_set_text(date_layer, date_string);
+	
+	if(!low_energy_state && low_energy) {
+		low_energy_state = true;
+	
+		enter_low_energy_mode();
+	} else if(low_energy_state && !low_energy) {
+		low_energy_state = false;
+		
+		leave_low_energy_mode();
+	}
+}
+
+static void enter_low_energy_mode(void) {
+	tick_timer_service_unsubscribe();
+	
+	tick_timer_service_subscribe(MINUTE_UNIT, handle_clock_tick);
+}
+
+static void leave_low_energy_mode(void) {
+	tick_timer_service_unsubscribe();
+	
+	tick_timer_service_subscribe(SECOND_UNIT, handle_clock_tick);
 }
 
 static void on_received_handler(DictionaryIterator *received, void *context) {
