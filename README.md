@@ -20,7 +20,7 @@ If you don't like that approach you could also use the Pebble SDKs "pebble" comm
 
 ## Licence
 
-No licence yet (so you're not allowed to do anything with Fancy Watch :P, except reading)
+pebble-fancywatch is licenced under the terms of the MIT licence. (For more informations read the [LICENCE file](LICENCE)
 
 ## Graphics
 
