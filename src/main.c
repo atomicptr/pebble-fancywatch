@@ -26,6 +26,10 @@
 #define IMAGE_SIZE 55
 #define NUMBER_OF_IMAGES 9
 
+#define TIME_POS_Y 5
+#define DATE_POS_Y TIME_POS_Y + 55
+#define WEATHER_POS_Y DATE_POS_Y + 25
+
 const int IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
 	RESOURCE_ID_CLEAR_DAY,
 	RESOURCE_ID_CLEAR_NIGHT,
@@ -104,7 +108,7 @@ static void window_load(Window *window) {
 	// setup time layer
 	time_layer = text_layer_create((GRect) {
 		.origin = {
-			0, 5
+			0, TIME_POS_Y
 		},
 		.size = {
 			bounds.size.w, 50
@@ -121,7 +125,7 @@ static void window_load(Window *window) {
 	// setup date layer
 	date_layer = text_layer_create((GRect) {
 		.origin = {
-			0, 60
+			0, DATE_POS_Y
 		},
 		.size = {
 			bounds.size.w, 22
@@ -138,7 +142,7 @@ static void window_load(Window *window) {
 	// setup temp layer
 	temp_layer = text_layer_create((GRect) {
 		.origin = {
-			bounds.size.w / 2 + 15, 85 + IMAGE_SIZE/2 - 11
+			bounds.size.w / 2 + 15, WEATHER_POS_Y + IMAGE_SIZE/2 - 11
 		},
 		.size = {
 			bounds.size.w / 2, 22
@@ -250,7 +254,7 @@ static void on_received_handler(DictionaryIterator *received, void *context) {
 	weather_image = gbitmap_create_with_resource(IMAGE_RESOURCE_IDS[weather.icon_id]);
 	weather_image_layer = bitmap_layer_create((GRect) {
 		.origin = {
-			bounds.size.w / 2 - IMAGE_SIZE - 5, 85
+			bounds.size.w / 2 - IMAGE_SIZE - 5, WEATHER_POS_Y
 		},
 		.size = {
 			bounds.size.w / 2, IMAGE_SIZE
