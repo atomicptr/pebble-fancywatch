@@ -26,7 +26,7 @@
 #define IMAGE_SIZE 55
 #define NUMBER_OF_IMAGES 9
 
-#define TIME_POS_Y 5
+#define TIME_POS_Y 25
 #define DATE_POS_Y TIME_POS_Y + 55
 #define WEATHER_POS_Y DATE_POS_Y + 25
 
