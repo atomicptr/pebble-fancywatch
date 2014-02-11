@@ -26,8 +26,6 @@
 #define IMAGE_SIZE 55
 #define NUMBER_OF_IMAGES 9
 
-#define LOW_ENERGY_CAP 20
-
 const int IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
 	RESOURCE_ID_CLEAR_DAY,
 	RESOURCE_ID_CLEAR_NIGHT,
@@ -46,14 +44,11 @@ static void window_load(Window*);
 static void window_unload(Window*);
 
 static void handle_clock_tick(struct tm*, TimeUnits);
-static void enter_low_energy_mode(void);
-static void leave_low_energy_mode(void);
 static void init_app_message(void);
 static void on_received_handler(DictionaryIterator*, void*);
 
 static Window *window;
 static TextLayer *time_layer;
-static TextLayer *delimiter_layer;
 static TextLayer *date_layer;
 static TextLayer *temp_layer;
 
@@ -63,8 +58,6 @@ static GBitmap *weather_image;
 
 static weather_t weather;
 static BatteryChargeState charge_state;
-static bool low_energy = false;
-static bool low_energy_state = false;
 
 /** init fancy watch */
 static void init(void) {
@@ -92,7 +85,7 @@ static void init(void) {
 /** init app messages */
 static void init_app_message(void) {
 	app_message_open(64, 16);
-	
+
 	app_message_register_inbox_received(on_received_handler);
 }
 
@@ -117,30 +110,13 @@ static void window_load(Window *window) {
 			bounds.size.w, 50
 		}
 	});
-	
+
 	text_layer_set_text_color(time_layer, GColorWhite);
 	text_layer_set_background_color(time_layer, GColorClear);
-	
-	text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
-	
-	text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
 
-	// setup time delimiter
-	delimiter_layer = text_layer_create((GRect) {
-		.origin = {
-			bounds.size.w / 2 - 10, 5
-		},
-		.size = {
-			20, 50
-		}
-	});
-	
-	text_layer_set_text_color(delimiter_layer, GColorWhite);
-	text_layer_set_background_color(delimiter_layer, GColorClear);
-	
-	text_layer_set_font(delimiter_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
-	
-	text_layer_set_text_alignment(delimiter_layer, GTextAlignmentCenter);
+	text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+
+	text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
 
 	// setup date layer
 	date_layer = text_layer_create((GRect) {
@@ -151,12 +127,12 @@ static void window_load(Window *window) {
 			bounds.size.w, 22
 		}
 	});
-	
+
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_background_color(date_layer, GColorClear);
-	
+
 	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
-	
+
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 
 	// setup temp layer
@@ -168,45 +144,43 @@ static void window_load(Window *window) {
 			bounds.size.w - IMAGE_SIZE/2, 22
 		}
 	});
-	
+
 	text_layer_set_text_color(temp_layer, GColorWhite);
 	text_layer_set_background_color(temp_layer, GColorClear);
-	
+
 	text_layer_set_font(temp_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
-	
+
 	text_layer_set_text_alignment(temp_layer, GTextAlignmentCenter);
 
 	// add children
 	layer_add_child(window_layer, text_layer_get_layer(time_layer));
-	layer_add_child(window_layer, text_layer_get_layer(delimiter_layer));
 	layer_add_child(window_layer, text_layer_get_layer(date_layer));
 	layer_add_child(window_layer, text_layer_get_layer(temp_layer));
-	
+
 	// call ticker
 	time_t now = time(NULL);
 	struct tm *tick_time;
 	tick_time = localtime(&now);
-	
-	handle_clock_tick(tick_time, SECOND_UNIT);
-	
+
+	handle_clock_tick(tick_time, MINUTE_UNIT);
+
 	// subscribe to tick service
-	tick_timer_service_subscribe(SECOND_UNIT, handle_clock_tick);
+	tick_timer_service_subscribe(MINUTE_UNIT, handle_clock_tick);
 }
 
 /** unload window */
 static void window_unload(Window *window) {
 	// destroy text layer
 	text_layer_destroy(time_layer);
-	text_layer_destroy(delimiter_layer);
 	text_layer_destroy(date_layer);
 	text_layer_destroy(temp_layer);
-	
+
 	// destroy images
 	gbitmap_destroy(weather_image);
-	
+
 	// destroy bitmap layer
 	bitmap_layer_destroy(weather_image_layer);
-	
+
 	// unsubscribe services
 	tick_timer_service_unsubscribe();
 	app_message_deregister_callbacks();
@@ -215,54 +189,20 @@ static void window_unload(Window *window) {
 /** is called every tick (every second if not low energy mode) */
 static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	charge_state = battery_state_service_peek();
-	
-	low_energy = charge_state.charge_percent <= LOW_ENERGY_CAP;
 
-	// handle delimiter animation
-	int seconds = tick_time->tm_sec;
-	
-	char *delimiter_string = seconds % 2 == 0 && !low_energy ? " " : ":";
-
-	text_layer_set_text(delimiter_layer, delimiter_string);
-	
 	// print time
 	char *buffer = "00:00";
-	
-	strftime(buffer, sizeof("00:00"), "%H %M", tick_time);
+
+	strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
 
 	text_layer_set_text(time_layer, buffer);
-	
+
 	// print date
 	char *date_string = "XXX. XX. XXX.";
-	
+
 	strftime(date_string, sizeof("XXX. XX. XXX."), "%a. %d. %b.", tick_time);
 
 	text_layer_set_text(date_layer, date_string);
-	
-	// handle low energy mode
-	if(!low_energy_state && low_energy) {
-		low_energy_state = true;
-	
-		enter_low_energy_mode();
-	} else if(low_energy_state && !low_energy) {
-		low_energy_state = false;
-		
-		leave_low_energy_mode();
-	}
-}
-
-/** enter low energy mode: tick only every minute */
-static void enter_low_energy_mode(void) {
-	tick_timer_service_unsubscribe();
-	
-	tick_timer_service_subscribe(MINUTE_UNIT, handle_clock_tick);
-}
-
-/** leave low energy mode: tick every second */
-static void leave_low_energy_mode(void) {
-	tick_timer_service_unsubscribe();
-	
-	tick_timer_service_subscribe(SECOND_UNIT, handle_clock_tick);
 }
 
 /** message from PebbleKit JS received */
@@ -273,7 +213,7 @@ static void on_received_handler(DictionaryIterator *received, void *context) {
 	Tuple *temp_kelvin = dict_find(received, WEATHER_MESSAGE_TEMP_KELVIN);
 	Tuple *temp_celsius = dict_find(received, WEATHER_MESSAGE_TEMP_CELSIUS);
 	Tuple *temp_fahrenheit = dict_find(received, WEATHER_MESSAGE_TEMP_FAHRENHEIT);
-	
+
 	// update weather
 	if(icon_id && temp_kelvin && temp_celsius && temp_fahrenheit) {
 		weather.icon_id = icon_id->value->int8;
@@ -286,29 +226,29 @@ static void on_received_handler(DictionaryIterator *received, void *context) {
 		weather.temp_celsius = 0;
 		weather.temp_fahrenheit = 0;
 	}
-	
+
 	if(weather_image != NULL) {
 		gbitmap_destroy(weather_image);
 		layer_remove_from_parent(bitmap_layer_get_layer(weather_image_layer));
 		bitmap_layer_destroy(weather_image_layer);
 	}
-	
+
 	// TODO: add option to select metric
 	int temperature = weather.temp_celsius;
-	
+
 	// set weather text
 	char *temp_string = "XXXXX";
-	
+
 	snprintf(temp_string, sizeof("-1337°"), "%d°", temperature);
-	
+
 	text_layer_set_text(temp_layer, temp_string);
-	
+
 	// set weather image
 	Layer *window_layer = window_get_root_layer(window);
-	
+
 	weather_image = gbitmap_create_with_resource(IMAGE_RESOURCE_IDS[weather.icon_id]);
 	weather_image_layer = bitmap_layer_create(GRect(15, 85, IMAGE_SIZE, IMAGE_SIZE));
-	
+
 	bitmap_layer_set_bitmap(weather_image_layer, weather_image);
 	layer_add_child(window_layer, bitmap_layer_get_layer(weather_image_layer));
 }
