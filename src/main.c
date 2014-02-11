@@ -138,10 +138,10 @@ static void window_load(Window *window) {
 	// setup temp layer
 	temp_layer = text_layer_create((GRect) {
 		.origin = {
-			IMAGE_SIZE/2 + 15, 85 + IMAGE_SIZE/2 - 11
+			bounds.size.w / 2 + 15, 85 + IMAGE_SIZE/2 - 11
 		},
 		.size = {
-			bounds.size.w - IMAGE_SIZE/2, 22
+			bounds.size.w / 2, 22
 		}
 	});
 
@@ -150,7 +150,7 @@ static void window_load(Window *window) {
 
 	text_layer_set_font(temp_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
 
-	text_layer_set_text_alignment(temp_layer, GTextAlignmentCenter);
+	text_layer_set_text_alignment(temp_layer, GTextAlignmentLeft);
 
 	// add children
 	layer_add_child(window_layer, text_layer_get_layer(time_layer));
@@ -245,9 +245,17 @@ static void on_received_handler(DictionaryIterator *received, void *context) {
 
 	// set weather image
 	Layer *window_layer = window_get_root_layer(window);
+	GRect bounds = layer_get_bounds(window_layer);
 
 	weather_image = gbitmap_create_with_resource(IMAGE_RESOURCE_IDS[weather.icon_id]);
-	weather_image_layer = bitmap_layer_create(GRect(15, 85, IMAGE_SIZE, IMAGE_SIZE));
+	weather_image_layer = bitmap_layer_create((GRect) {
+		.origin = {
+			bounds.size.w / 2 - IMAGE_SIZE - 5, 85
+		},
+		.size = {
+			bounds.size.w / 2, IMAGE_SIZE
+		}
+	});
 
 	bitmap_layer_set_bitmap(weather_image_layer, weather_image);
 	layer_add_child(window_layer, bitmap_layer_get_layer(weather_image_layer));
