@@ -23,6 +23,8 @@
 #include <pebble.h>
 #include "weather.h"
 
+#define EVENT_TYPE 0
+
 #define IMAGE_SIZE 55
 #define NUMBER_OF_IMAGES 9
 
@@ -42,6 +44,19 @@ const int IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
 	RESOURCE_ID_ERROR
 };
 
+enum {
+	PEBBLE_EVENT_IDENT_NEW_WEATHER_INFO = 0,
+	PEBBLE_EVENT_IDENT_CONFIGURATION_CHANGED = 1
+};
+
+enum {
+	CONFIGURATION_IDENT_TEMP_METRIC = 1
+};
+
+enum {
+	PERSIST_KEY_TEMP_METRIC = 0
+};
+
 static void init(void);
 static void destroy(void);
 static void window_load(Window*);
@@ -50,6 +65,8 @@ static void window_unload(Window*);
 static void handle_clock_tick(struct tm*, TimeUnits);
 static void init_app_message(void);
 static void on_received_handler(DictionaryIterator*, void*);
+static void on_weather_handler_received(DictionaryIterator*, void*);
+static void on_configuration_handler_received(DictionaryIterator*, void*);
 
 static Window *window;
 static TextLayer *time_layer;
@@ -63,8 +80,13 @@ static GBitmap *weather_image;
 static weather_t weather;
 static BatteryChargeState charge_state;
 
+static int TEMPERATURE_METRIC = WEATHER_CONFIGURATION_IDENT_CELSIUS;
+
 /** init fancy watch */
 static void init(void) {
+	// retrieve data
+	TEMPERATURE_METRIC = persist_read_int(PERSIST_KEY_TEMP_METRIC);
+
 	window = window_create();
 
 	// init weather struct
@@ -95,6 +117,9 @@ static void init_app_message(void) {
 
 /** destroy fancy watch */
 static void destroy(void) {
+	// store data
+	persist_write_int(PERSIST_KEY_TEMP_METRIC, TEMPERATURE_METRIC);
+
 	window_destroy(window);
 }
 
@@ -213,6 +238,24 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 static void on_received_handler(DictionaryIterator *received, void *context) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "received information from PebbleKitJS");
 
+	Tuple *event_type = dict_find(received, EVENT_TYPE);
+
+	switch(event_type->value->int8) {
+		case PEBBLE_EVENT_IDENT_NEW_WEATHER_INFO:
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "received new weather event");
+			on_weather_handler_received(received, context);
+			break;
+		case PEBBLE_EVENT_IDENT_CONFIGURATION_CHANGED:
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "received configuration changed event");
+			on_configuration_handler_received(received, context);
+			break;
+		default:
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "received invalid event id: %d", event_type->value->int8);
+			break;
+	}
+}
+
+static void on_weather_handler_received(DictionaryIterator *received, void *context) {
 	Tuple *icon_id = dict_find(received, WEATHER_MESSAGE_ICON_ID);
 	Tuple *temp_kelvin = dict_find(received, WEATHER_MESSAGE_TEMP_KELVIN);
 	Tuple *temp_celsius = dict_find(received, WEATHER_MESSAGE_TEMP_CELSIUS);
@@ -237,8 +280,22 @@ static void on_received_handler(DictionaryIterator *received, void *context) {
 		bitmap_layer_destroy(weather_image_layer);
 	}
 
-	// TODO: add option to select metric
-	int temperature = weather.temp_celsius;
+	int temperature = -1;
+
+	switch(TEMPERATURE_METRIC) {
+		case WEATHER_CONFIGURATION_IDENT_CELSIUS:
+			temperature = weather.temp_celsius;
+			break;
+		case WEATHER_CONFIGURATION_IDENT_FAHRENHEIT:
+			temperature = weather.temp_fahrenheit;
+			break;
+		case WEATHER_CONFIGURATION_IDENT_KELVIN:
+			temperature = weather.temp_kelvin;
+			break;
+		default:
+			temperature = weather.temp_celsius;
+			break;
+	}
 
 	// set weather text
 	char *temp_string = "XXXXX";
@@ -263,6 +320,12 @@ static void on_received_handler(DictionaryIterator *received, void *context) {
 
 	bitmap_layer_set_bitmap(weather_image_layer, weather_image);
 	layer_add_child(window_layer, bitmap_layer_get_layer(weather_image_layer));
+}
+
+static void on_configuration_handler_received(DictionaryIterator *received, void *context) {
+	Tuple *temp_metric = dict_find(received, CONFIGURATION_IDENT_TEMP_METRIC);
+
+	TEMPERATURE_METRIC = temp_metric->value->int8;
 }
 
 int main(void) {

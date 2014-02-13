@@ -9,13 +9,17 @@
 		"watchface": true
 	},
 	"capabilities": [
-		"location"
+		"location", "configurable"
 	],
 	"appKeys": {
-		"icon_id": 0,
-		"temp_kelvin": 1,
-		"temp_celsius": 2,
-		"temp_fahrenheit": 3
+		"event_type": 0,
+
+		"icon_id": 1,
+		"temp_kelvin": 2,
+		"temp_celsius": 3,
+		"temp_fahrenheit": 4,
+
+		"temp_metric": 1
 	},
 	"resources": {
 		"media": [
