@@ -66,6 +66,11 @@ enum {
 	PERSIST_KEY_SHOW_BATTERY = 1,
 };
 
+enum {
+	BATTERY_HIDE = 0,
+	BATTERY_SHOW = 1
+};
+
 static void init(void);
 static void destroy(void);
 static void window_load(Window*);
@@ -94,7 +99,7 @@ static weather_t weather;
 static BatteryChargeState charge_state;
 
 static int TEMPERATURE_METRIC = WEATHER_CONFIGURATION_IDENT_CELSIUS;
-static int SHOW_BATTERY = 1;
+static int SHOW_BATTERY = BATTERY_SHOW;
 
 /** init fancy watch */
 static void init(void) {
@@ -102,7 +107,7 @@ static void init(void) {
 	TEMPERATURE_METRIC = persist_exists(PERSIST_KEY_TEMP_METRIC) ?
 		persist_read_int(PERSIST_KEY_TEMP_METRIC) : WEATHER_CONFIGURATION_IDENT_CELSIUS;
 	SHOW_BATTERY = persist_exists(PERSIST_KEY_SHOW_BATTERY) ?
-		persist_read_int(PERSIST_KEY_SHOW_BATTERY) : 1;
+		persist_read_int(PERSIST_KEY_SHOW_BATTERY) : BATTERY_SHOW;
 
 	window = window_create();
 
@@ -237,8 +242,15 @@ static void window_unload(Window *window) {
 static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	charge_state = battery_state_service_peek();
 
-	if(SHOW_BATTERY == 1) {
+	if(SHOW_BATTERY == BATTERY_SHOW) {
 		update_battery_indicator();
+	} else {
+		// destroy battery stuff
+		if(battery_image != NULL) {
+			gbitmap_destroy(battery_image);
+			layer_remove_from_parent(bitmap_layer_get_layer(battery_image_layer));
+			bitmap_layer_destroy(battery_image_layer);
+		}
 	}
 
 	// print time
