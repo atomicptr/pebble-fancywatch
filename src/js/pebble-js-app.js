@@ -149,7 +149,8 @@ Pebble.addEventListener("webviewclosed", function(e) {
 	if(options.fezzes_are == "cool") {
 		var pebble_data = {
 			"event_type": PEBBLE_EVENT_CONFIGURATION_CHANGED,
-			"temp_metric": Number(options.temp_metric)
+			"temp_metric": Number(options.temp_metric),
+			"show_battery": Number(options.show_battery)
 		};
 
 		// send date to pebble

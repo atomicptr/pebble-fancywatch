@@ -25,14 +25,14 @@
 					</select>
 				</div>
 
-				<!--<div data-role="fieldcontain">
-					<fieldset data-role="controlgroup">
-						<legend>Choose as many snacks as you'd like:</legend>
-						<input type="checkbox" name="checkbox-cheetos" id="checkbox-cheetos" class="custom" />
-						<label for="checkbox-cheetos">Cheetos</label>
-					</fieldset>
+				<div data-role="fieldcontain">
+					<label for="show-battery">Show battery state:</label>
+					<select name="show-battery" id="show-battery" data-role="slider">
+						<option value="0">Off</option>
+						<option value="1" selected>On</option>
+					</select>
 				</div>
-			</div> -->
+			</div>
 
 			<div class="ui-body ui-body-b">
 				<fieldset class="ui-grid-a">
@@ -50,8 +50,8 @@
 			function saveOptions() {
 				var options = {
 					"fezzes_are": "cool",
-					"temp_metric": $("#temp-metric").val()
-					//'checkbox-sunchips': $("#checkbox-sunchips").is(':checked')
+					"temp_metric": $("#temp-metric").val(),
+					"show_battery": $("#show-battery").val()
 				}
 
 				return options;

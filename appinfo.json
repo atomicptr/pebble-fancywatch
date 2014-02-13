@@ -3,8 +3,8 @@
 	"shortName": "Fancy Watch",
 	"longName": "Fancy Watch",
 	"companyName": "Kasoki",
-	"versionCode": 3,
-	"versionLabel": "0.1.0",
+	"versionCode": 4,
+	"versionLabel": "0.1.2",
 	"watchapp": {
 		"watchface": true
 	},
@@ -19,7 +19,8 @@
 		"temp_celsius": 3,
 		"temp_fahrenheit": 4,
 
-		"temp_metric": 1
+		"temp_metric": 1,
+		"show_battery": 2
 	},
 	"resources": {
 		"media": [
@@ -67,6 +68,26 @@
 				"name": "ERROR",
 				"type": "png",
 				"file": "images/error.png"
+			},
+			{
+				"name": "BATTERY_0",
+				"type": "png",
+				"file": "images/battery_0.png"
+			},
+			{
+				"name": "BATTERY_1",
+				"type": "png",
+				"file": "images/battery_1.png"
+			},
+			{
+				"name": "BATTERY_2",
+				"type": "png",
+				"file": "images/battery_2.png"
+			},
+			{
+				"name": "BATTERY_3",
+				"type": "png",
+				"file": "images/battery_3.png"
 			}
 		]
 	}

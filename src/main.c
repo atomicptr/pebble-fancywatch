@@ -32,7 +32,7 @@
 #define DATE_POS_Y TIME_POS_Y + 55
 #define WEATHER_POS_Y DATE_POS_Y + 25
 
-const int IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
+const int WEATHER_IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
 	RESOURCE_ID_CLEAR_DAY,
 	RESOURCE_ID_CLEAR_NIGHT,
 	RESOURCE_ID_CLOUDY,
@@ -44,17 +44,26 @@ const int IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
 	RESOURCE_ID_ERROR
 };
 
+const int BATTERY_IMAGE_RESOURCE_IDS[4] = {
+	RESOURCE_ID_BATTERY_0,
+	RESOURCE_ID_BATTERY_1,
+	RESOURCE_ID_BATTERY_2,
+	RESOURCE_ID_BATTERY_3
+};
+
 enum {
 	PEBBLE_EVENT_IDENT_NEW_WEATHER_INFO = 0,
 	PEBBLE_EVENT_IDENT_CONFIGURATION_CHANGED = 1
 };
 
 enum {
-	CONFIGURATION_IDENT_TEMP_METRIC = 1
+	CONFIGURATION_IDENT_TEMP_METRIC = 1,
+	CONFIGURATION_IDENT_SHOW_BATTERY = 2
 };
 
 enum {
-	PERSIST_KEY_TEMP_METRIC = 0
+	PERSIST_KEY_TEMP_METRIC = 0,
+	PERSIST_KEY_SHOW_BATTERY = 1,
 };
 
 static void init(void);
@@ -64,6 +73,8 @@ static void window_unload(Window*);
 
 static void handle_clock_tick(struct tm*, TimeUnits);
 static void init_app_message(void);
+static void update_battery_indicator(void);
+static int get_battery_image(void);
 static void on_received_handler(DictionaryIterator*, void*);
 static void on_weather_handler_received(DictionaryIterator*, void*);
 static void on_configuration_handler_received(DictionaryIterator*, void*);
@@ -74,18 +85,24 @@ static TextLayer *date_layer;
 static TextLayer *temp_layer;
 
 static BitmapLayer *weather_image_layer;
+static BitmapLayer *battery_image_layer;
 
 static GBitmap *weather_image;
+static GBitmap *battery_image;
 
 static weather_t weather;
 static BatteryChargeState charge_state;
 
 static int TEMPERATURE_METRIC = WEATHER_CONFIGURATION_IDENT_CELSIUS;
+static int SHOW_BATTERY = 1;
 
 /** init fancy watch */
 static void init(void) {
 	// retrieve data
-	TEMPERATURE_METRIC = persist_read_int(PERSIST_KEY_TEMP_METRIC);
+	TEMPERATURE_METRIC = persist_exists(PERSIST_KEY_TEMP_METRIC) ?
+		persist_read_int(PERSIST_KEY_TEMP_METRIC) : WEATHER_CONFIGURATION_IDENT_CELSIUS;
+	SHOW_BATTERY = persist_exists(PERSIST_KEY_SHOW_BATTERY) ?
+		persist_read_int(PERSIST_KEY_SHOW_BATTERY) : 1;
 
 	window = window_create();
 
@@ -119,6 +136,7 @@ static void init_app_message(void) {
 static void destroy(void) {
 	// store data
 	persist_write_int(PERSIST_KEY_TEMP_METRIC, TEMPERATURE_METRIC);
+	persist_write_int(PERSIST_KEY_SHOW_BATTERY, SHOW_BATTERY);
 
 	window_destroy(window);
 }
@@ -219,6 +237,10 @@ static void window_unload(Window *window) {
 static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	charge_state = battery_state_service_peek();
 
+	if(SHOW_BATTERY == 1) {
+		update_battery_indicator();
+	}
+
 	// print time
 	char *buffer = "00:00";
 
@@ -232,6 +254,46 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	strftime(date_string, sizeof("XXX. XX. XXX."), "%a. %d. %b.", tick_time);
 
 	text_layer_set_text(date_layer, date_string);
+}
+
+static void update_battery_indicator(void) {
+	Layer *window_layer = window_get_root_layer(window);
+	GRect bounds = layer_get_bounds(window_layer);
+
+	int battery_resource_id = get_battery_image();
+
+	if(battery_image != NULL) {
+		gbitmap_destroy(battery_image);
+		layer_remove_from_parent(bitmap_layer_get_layer(battery_image_layer));
+		bitmap_layer_destroy(battery_image_layer);
+	}
+
+	battery_image = gbitmap_create_with_resource(BATTERY_IMAGE_RESOURCE_IDS[battery_resource_id]);
+	battery_image_layer = bitmap_layer_create((GRect) {
+		.origin = {
+			bounds.size.w / 2 + 13, 0
+		},
+		.size = {
+			bounds.size.w / 2, 42
+		}
+	});
+
+	bitmap_layer_set_bitmap(battery_image_layer, battery_image);
+	layer_add_child(window_layer, bitmap_layer_get_layer(battery_image_layer));
+}
+
+static int get_battery_image(void) {
+	uint8_t percent = charge_state.charge_percent;
+
+	if(percent >= 75) {
+		return 3;
+	} else if(percent >= 50) {
+		return 2;
+	} else if(percent > 20) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 /** message from PebbleKit JS received */
@@ -308,7 +370,7 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
 
-	weather_image = gbitmap_create_with_resource(IMAGE_RESOURCE_IDS[weather.icon_id]);
+	weather_image = gbitmap_create_with_resource(WEATHER_IMAGE_RESOURCE_IDS[weather.icon_id]);
 	weather_image_layer = bitmap_layer_create((GRect) {
 		.origin = {
 			bounds.size.w / 2 - IMAGE_SIZE - 5, WEATHER_POS_Y
@@ -324,8 +386,10 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 
 static void on_configuration_handler_received(DictionaryIterator *received, void *context) {
 	Tuple *temp_metric = dict_find(received, CONFIGURATION_IDENT_TEMP_METRIC);
+	Tuple *show_battery = dict_find(received, CONFIGURATION_IDENT_SHOW_BATTERY);
 
 	TEMPERATURE_METRIC = temp_metric->value->int8;
+	SHOW_BATTERY = show_battery->value->int8;
 }
 
 int main(void) {
