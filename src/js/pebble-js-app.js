@@ -35,7 +35,7 @@ get_location_and_show_weather = function() {
 		get_weather(e.coords.longitude, e.coords.latitude);
 	});
 
-	TIMEOUT_VAR = setTimeout(get_location_and_show_weather, 5 * MINUTE);
+	TIMEOUT_VAR = setTimeout(get_location_and_show_weather, 15 * MINUTE);
 };
 
 get_weather = function(longitute, latitute) {
