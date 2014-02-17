@@ -79,7 +79,8 @@ static void window_unload(Window*);
 static void handle_clock_tick(struct tm*, TimeUnits);
 static void init_app_message(void);
 static void update_battery_indicator(void);
-static int get_battery_image(void);
+static int get_battery_image(uint8_t);
+static bool battery_state_changed(void);
 static void on_received_handler(DictionaryIterator*, void*);
 static void on_weather_handler_received(DictionaryIterator*, void*);
 static void on_configuration_handler_received(DictionaryIterator*, void*);
@@ -97,6 +98,8 @@ static GBitmap *battery_image;
 
 static weather_t weather;
 static BatteryChargeState charge_state;
+
+static uint8_t old_battery_percent = -1;
 
 static int TEMPERATURE_METRIC = WEATHER_CONFIGURATION_IDENT_CELSIUS;
 static int SHOW_BATTERY = BATTERY_SHOW;
@@ -243,7 +246,9 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	charge_state = battery_state_service_peek();
 
 	if(SHOW_BATTERY == BATTERY_SHOW) {
-		update_battery_indicator();
+		if(battery_state_changed()) {
+			update_battery_indicator();
+		}
 	} else {
 		// destroy battery stuff
 		if(battery_image != NULL) {
@@ -272,7 +277,9 @@ static void update_battery_indicator(void) {
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
 
-	int battery_resource_id = get_battery_image();
+	uint8_t percent = charge_state.charge_percent;
+
+	int battery_resource_id = get_battery_image(percent);
 
 	if(battery_image != NULL) {
 		gbitmap_destroy(battery_image);
@@ -294,9 +301,7 @@ static void update_battery_indicator(void) {
 	layer_add_child(window_layer, bitmap_layer_get_layer(battery_image_layer));
 }
 
-static int get_battery_image(void) {
-	uint8_t percent = charge_state.charge_percent;
-
+static int get_battery_image(uint8_t percent) {
 	if(percent >= 75) {
 		return 3;
 	} else if(percent >= 50) {
@@ -306,6 +311,17 @@ static int get_battery_image(void) {
 	} else {
 		return 0;
 	}
+}
+
+static bool battery_state_changed(void) {
+	uint8_t percent = charge_state.charge_percent;
+	bool has_changed = false;
+
+	has_changed = get_battery_image(old_battery_percent) != get_battery_image(percent);
+
+	old_battery_percent = percent;
+
+	return has_changed;
 }
 
 /** message from PebbleKit JS received */
