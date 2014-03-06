@@ -23,7 +23,7 @@
 SECOND = 1000;
 MINUTE = SECOND * 60;
 
-WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather?lat={0}&lon={1}&mode=json";
+WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather?lon={0}&lat={1}&mode=json";
 
 PEBBLE_EVENT_NEW_WEATHER_INFO = 0;
 PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
@@ -31,17 +31,26 @@ PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
 TIMEOUT_VAR = null;
 
 get_location_and_show_weather = function() {
+	console.log("js: get location");
+
 	navigator.geolocation.getCurrentPosition(function(e) {
+		console.log("js: you're currently at coords: long: " +
+			e.coords.longitude + ", lat: " + e.coords.latitude);
+
 		get_weather(e.coords.longitude, e.coords.latitude);
 	});
 
 	TIMEOUT_VAR = setTimeout(get_location_and_show_weather, 15 * MINUTE);
 };
 
-get_weather = function(longitute, latitute) {
+get_weather = function(longitude, latitude) {
+	var request_url = String.format(WEATHER_API_URL, longitude, latitude);
+
+	console.log("js: request weather info from: " + request_url);
+
 	var request = new XMLHttpRequest();
 
-	request.open("GET", WEATHER_API_URL.format(longitute, latitute), true);
+	request.open("GET", request_url, true);
 
 	request.onload = function(e) {
 		if(request.readyState == 4 && request.status == 200) {
@@ -119,16 +128,13 @@ convert_kelvin_to_fahrenheit = function(kelvin) {
 	return (kelvin * 1.8) - 459.67;
 };
 
-// String.format seems to be undefined in pebble
-if(!String.prototype.format) {
-	String.prototype.format = function() {
-		var format_replace = function(match, number) {
-			return typeof(arguments[number] != undefined ? arguments[number] : match);
-		};
+String.format = function(format) {
+	var args = Array.prototype.slice.call(arguments, 1);
 
-		return this.replace(/{(\d+)}/g, format_replace)
-	};
-}
+	return format.replace(/{(\d+)}/g, function(match, number) {
+		return typeof args[number] != 'undefined' ? args[number] : match;
+	});
+};
 
 Pebble.addEventListener("ready", function(e) {
 	setTimeout(get_location_and_show_weather, 1000);
