@@ -104,6 +104,8 @@ static uint8_t old_battery_percent = -1;
 static int TEMPERATURE_METRIC = WEATHER_CONFIGURATION_IDENT_CELSIUS;
 static int SHOW_BATTERY = BATTERY_SHOW;
 
+static bool battery_indicator_initialized = false;
+
 /** init fancy watch */
 static void init(void) {
 	// retrieve data
@@ -246,8 +248,14 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	charge_state = battery_state_service_peek();
 
 	if(SHOW_BATTERY == BATTERY_SHOW) {
-		if(battery_state_changed()) {
+		if(battery_state_changed() || !battery_indicator_initialized) {
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "CHANGE BATTERY STATE");
+
+			battery_indicator_initialized = true;
+
 			update_battery_indicator();
+		} else {
+			APP_LOG(APP_LOG_LEVEL_DEBUG, "DON'T CHANGE BATTERY STATE");
 		}
 	} else {
 		// destroy battery stuff
