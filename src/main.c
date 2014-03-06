@@ -81,6 +81,7 @@ static void init_app_message(void);
 static void update_battery_indicator(void);
 static int get_battery_image(uint8_t);
 static bool battery_state_changed(void);
+static void destroy_battery_indicator(void);
 static void on_received_handler(DictionaryIterator*, void*);
 static void on_weather_handler_received(DictionaryIterator*, void*);
 static void on_configuration_handler_received(DictionaryIterator*, void*);
@@ -147,6 +148,8 @@ static void destroy(void) {
 	// store data
 	persist_write_int(PERSIST_KEY_TEMP_METRIC, TEMPERATURE_METRIC);
 	persist_write_int(PERSIST_KEY_SHOW_BATTERY, SHOW_BATTERY);
+
+	destroy_battery_indicator();
 
 	window_destroy(window);
 }
@@ -258,12 +261,7 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 			APP_LOG(APP_LOG_LEVEL_DEBUG, "DON'T CHANGE BATTERY STATE");
 		}
 	} else {
-		// destroy battery stuff
-		if(battery_image != NULL) {
-			gbitmap_destroy(battery_image);
-			layer_remove_from_parent(bitmap_layer_get_layer(battery_image_layer));
-			bitmap_layer_destroy(battery_image_layer);
-		}
+		destroy_battery_indicator();
 	}
 
 	// print time
@@ -289,11 +287,7 @@ static void update_battery_indicator(void) {
 
 	int battery_resource_id = get_battery_image(percent);
 
-	if(battery_image != NULL) {
-		gbitmap_destroy(battery_image);
-		layer_remove_from_parent(bitmap_layer_get_layer(battery_image_layer));
-		bitmap_layer_destroy(battery_image_layer);
-	}
+	destroy_battery_indicator();
 
 	battery_image = gbitmap_create_with_resource(BATTERY_IMAGE_RESOURCE_IDS[battery_resource_id]);
 	battery_image_layer = bitmap_layer_create((GRect) {
@@ -330,6 +324,14 @@ static bool battery_state_changed(void) {
 	old_battery_percent = percent;
 
 	return has_changed;
+}
+
+static void destroy_battery_indicator(void) {
+	if(battery_image != NULL) {
+		gbitmap_destroy(battery_image);
+		layer_remove_from_parent(bitmap_layer_get_layer(battery_image_layer));
+		bitmap_layer_destroy(battery_image_layer);
+	}
 }
 
 /** message from PebbleKit JS received */
