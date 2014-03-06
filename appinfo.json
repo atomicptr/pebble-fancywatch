@@ -2,9 +2,9 @@
 	"uuid": "a812784b-59b5-4541-a54e-7f3929a3ce7e",
 	"shortName": "Fancy Watch",
 	"longName": "Fancy Watch",
-	"companyName": "Kasoki",
-	"versionCode": 5,
-	"versionLabel": "0.1.3",
+	"companyName": "kasoki",
+	"versionCode": 6,
+	"versionLabel": "0.1.4",
 	"watchapp": {
 		"watchface": true
 	},
