@@ -30,6 +30,10 @@ PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
 
 TIMEOUT_VAR = null;
 
+LAST_WEATHER_INFO = {
+	"event_type": PEBBLE_EVENT_NEW_WEATHER_INFO,
+};;
+
 get_location_and_show_weather = function() {
 	console.log("js: try to obtain location");
 
@@ -58,12 +62,9 @@ get_location_and_show_weather = function() {
 				break;
 		}
 
-		// send error to pebble
-		var pebble_data = {
-			"event_type": PEBBLE_EVENT_NEW_WEATHER_INFO,
-		};
+		console.warn("js: send last weather info instead: " + JSON.stringify(LAST_WEATHER_INFO));
 
-		Pebble.sendAppMessage(pebble_data);
+		Pebble.sendAppMessage(LAST_WEATHER_INFO);
 
 		console.warn("js: try to obtain location again in one minute...");
 
@@ -88,7 +89,7 @@ get_weather = function(longitude, latitude) {
 
 			console.log("ANSWER FROM SERVER: " + request.responseText);
 
-			var pebble_data = {
+			LAST_WEATHER_INFO = {
 				"event_type": PEBBLE_EVENT_NEW_WEATHER_INFO,
 				"icon_id": get_icon_id(response.weather[0].icon),
 				"temp_kelvin": Number(Number(response.main.temp).toFixed(0)),
@@ -97,8 +98,8 @@ get_weather = function(longitude, latitude) {
 			};
 
 			// send date to pebble
-			Pebble.sendAppMessage(pebble_data);
-			console.log("Send: " + JSON.stringify(pebble_data, 4) + " to pebble");
+			Pebble.sendAppMessage(LAST_WEATHER_INFO);
+			console.log("Send: " + JSON.stringify(LAST_WEATHER_INFO, 4) + " to pebble");
 		} else {
 			console.log("ERROR: connection to weather api failed with code: " + request.status);
 		}
