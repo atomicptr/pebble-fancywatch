@@ -3,8 +3,8 @@
 	"shortName": "Fancy Watch",
 	"longName": "Fancy Watch",
 	"companyName": "kasoki",
-	"versionCode": 7,
-	"versionLabel": "0.2.0",
+	"versionCode": 8,
+	"versionLabel": "0.2.1",
 	"watchapp": {
 		"watchface": true
 	},
