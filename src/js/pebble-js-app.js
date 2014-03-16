@@ -31,16 +31,46 @@ PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
 TIMEOUT_VAR = null;
 
 get_location_and_show_weather = function() {
-	console.log("js: get location");
+	console.log("js: try to obtain location");
 
 	navigator.geolocation.getCurrentPosition(function(e) {
 		console.log("js: you're currently at coords: long: " +
 			e.coords.longitude + ", lat: " + e.coords.latitude);
 
 		get_weather(e.coords.longitude, e.coords.latitude);
-	});
 
-	TIMEOUT_VAR = setTimeout(get_location_and_show_weather, 15 * MINUTE);
+		TIMEOUT_VAR = setTimeout(get_location_and_show_weather, 15 * MINUTE);
+	}, function(error) {
+		console.warn("js: error while locating user....");
+
+		switch(error.code) {
+			case error.PERMISSION_DENIED:
+				console.warn("js: location permission denied");
+				break;
+			case error.POSITION_UNAVAILABLE:
+				console.warn("js: location position unavailable");
+				break;
+			case error.TIMEOUT:
+				console.warn("js: location timeout");
+				break;
+			default:
+				console.warn("js: location unknown error");
+				break;
+		}
+
+		// send error to pebble
+		var pebble_data = {
+			"event_type": PEBBLE_EVENT_NEW_WEATHER_INFO,
+		};
+
+		Pebble.sendAppMessage(pebble_data);
+
+		console.warn("js: try to obtain location again in one minute...");
+
+		TIMEOUT_VAR = setTimeout(get_location_and_show_weather, MINUTE);
+	}, {
+		"timeout": SECOND * 15
+	});
 };
 
 get_weather = function(longitude, latitude) {

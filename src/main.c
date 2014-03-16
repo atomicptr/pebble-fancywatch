@@ -376,6 +376,8 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 	Tuple *temp_celsius = dict_find(received, WEATHER_MESSAGE_TEMP_CELSIUS);
 	Tuple *temp_fahrenheit = dict_find(received, WEATHER_MESSAGE_TEMP_FAHRENHEIT);
 
+	bool error = false;
+
 	// update weather
 	if(icon_id && temp_kelvin && temp_celsius && temp_fahrenheit) {
 		weather.icon_id = icon_id->value->int8;
@@ -387,6 +389,8 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 		weather.temp_kelvin = 0;
 		weather.temp_celsius = 0;
 		weather.temp_fahrenheit = 0;
+
+		error = true;
 	}
 
 	if(weather_image != NULL) {
@@ -415,7 +419,11 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 	// set weather text
 	char *temp_string = "XXXXX";
 
-	snprintf(temp_string, sizeof("-1337°"), "%d°", temperature);
+	if(!error) {
+		snprintf(temp_string, sizeof("-1337°"), "%d°", temperature);
+	} else {
+		temp_string = "";
+	}
 
 	text_layer_set_text(temp_layer, temp_string);
 
@@ -423,10 +431,16 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 	Layer *window_layer = window_get_root_layer(window);
 	GRect bounds = layer_get_bounds(window_layer);
 
+	int weather_image_pos_x = bounds.size.w / 2 - IMAGE_SIZE - 5;
+
+	if(error) {
+		weather_image_pos_x = bounds.size.w / 2 - IMAGE_SIZE + 20;
+	}
+
 	weather_image = gbitmap_create_with_resource(WEATHER_IMAGE_RESOURCE_IDS[weather.icon_id]);
 	weather_image_layer = bitmap_layer_create((GRect) {
 		.origin = {
-			bounds.size.w / 2 - IMAGE_SIZE - 5, WEATHER_POS_Y
+			weather_image_pos_x, WEATHER_POS_Y
 		},
 		.size = {
 			bounds.size.w / 2, IMAGE_SIZE
