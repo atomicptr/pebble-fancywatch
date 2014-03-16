@@ -30,9 +30,8 @@ PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
 
 TIMEOUT_VAR = null;
 
-LAST_WEATHER_INFO = {
-	"event_type": PEBBLE_EVENT_NEW_WEATHER_INFO,
-};;
+LAST_WEATHER_INFO = {}
+WEATHER_INFO_RECEIVED_ONCE = false;
 
 get_location_and_show_weather = function() {
 	console.log("js: try to obtain location");
@@ -62,9 +61,12 @@ get_location_and_show_weather = function() {
 				break;
 		}
 
-		console.warn("js: send last weather info instead: " + JSON.stringify(LAST_WEATHER_INFO));
-
-		Pebble.sendAppMessage(LAST_WEATHER_INFO);
+		if(!WEATHER_INFO_RECEIVED_ONCE) {
+			// send error message
+			Pebble.sendAppMessage({
+				"event_type": PEBBLE_EVENT_NEW_WEATHER_INFO,
+			});
+		}
 
 		console.warn("js: try to obtain location again in one minute...");
 
@@ -96,6 +98,8 @@ get_weather = function(longitude, latitude) {
 				"temp_celsius": Number(convert_kelvin_to_celsius(Number(response.main.temp)).toFixed(0)),
 				"temp_fahrenheit": Number(convert_kelvin_to_fahrenheit(Number(response.main.temp)).toFixed(0))
 			};
+
+			WEATHER_INFO_RECEIVED_ONCE = true;
 
 			// send date to pebble
 			Pebble.sendAppMessage(LAST_WEATHER_INFO);
