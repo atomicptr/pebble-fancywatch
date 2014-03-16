@@ -156,7 +156,8 @@ Pebble.addEventListener("webviewclosed", function(e) {
 		var pebble_data = {
 			"event_type": PEBBLE_EVENT_CONFIGURATION_CHANGED,
 			"temp_metric": Number(options.temp_metric),
-			"show_battery": Number(options.show_battery)
+			"show_battery": Number(options.show_battery),
+			"use_12hour": Number(options.use_12hour)
 		};
 
 		// send date to pebble

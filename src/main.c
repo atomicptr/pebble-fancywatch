@@ -58,12 +58,14 @@ enum {
 
 enum {
 	CONFIGURATION_IDENT_TEMP_METRIC = 1,
-	CONFIGURATION_IDENT_SHOW_BATTERY = 2
+	CONFIGURATION_IDENT_SHOW_BATTERY = 2,
+	CONFIGURATION_IDENT_USE_12HOUR_FORMAT = 3
 };
 
 enum {
 	PERSIST_KEY_TEMP_METRIC = 0,
 	PERSIST_KEY_SHOW_BATTERY = 1,
+	PERSIST_KEY_USE_12_HOUR = 2
 };
 
 enum {
@@ -76,6 +78,7 @@ static void destroy(void);
 static void window_load(Window*);
 static void window_unload(Window*);
 
+static void force_clock_tick_update(void);
 static void handle_clock_tick(struct tm*, TimeUnits);
 static void init_app_message(void);
 static void update_battery_indicator(void);
@@ -104,6 +107,7 @@ static uint8_t old_battery_percent = -1;
 
 static int TEMPERATURE_METRIC = WEATHER_CONFIGURATION_IDENT_CELSIUS;
 static int SHOW_BATTERY = BATTERY_SHOW;
+static bool USE_12_HOUR_FORMAT = false;
 
 static bool battery_indicator_initialized = false;
 
@@ -114,6 +118,8 @@ static void init(void) {
 		persist_read_int(PERSIST_KEY_TEMP_METRIC) : WEATHER_CONFIGURATION_IDENT_CELSIUS;
 	SHOW_BATTERY = persist_exists(PERSIST_KEY_SHOW_BATTERY) ?
 		persist_read_int(PERSIST_KEY_SHOW_BATTERY) : BATTERY_SHOW;
+	USE_12_HOUR_FORMAT = persist_exists(PERSIST_KEY_USE_12_HOUR) ?
+		persist_read_bool(PERSIST_KEY_USE_12_HOUR) : false;
 
 	window = window_create();
 
@@ -148,6 +154,7 @@ static void destroy(void) {
 	// store data
 	persist_write_int(PERSIST_KEY_TEMP_METRIC, TEMPERATURE_METRIC);
 	persist_write_int(PERSIST_KEY_SHOW_BATTERY, SHOW_BATTERY);
+	persist_write_bool(PERSIST_KEY_USE_12_HOUR, USE_12_HOUR_FORMAT);
 
 	destroy_battery_indicator();
 
@@ -217,12 +224,7 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, text_layer_get_layer(date_layer));
 	layer_add_child(window_layer, text_layer_get_layer(temp_layer));
 
-	// call ticker
-	time_t now = time(NULL);
-	struct tm *tick_time;
-	tick_time = localtime(&now);
-
-	handle_clock_tick(tick_time, MINUTE_UNIT);
+	force_clock_tick_update();
 
 	// subscribe to tick service
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_clock_tick);
@@ -246,6 +248,15 @@ static void window_unload(Window *window) {
 	app_message_deregister_callbacks();
 }
 
+static void force_clock_tick_update(void) {
+	// call ticker
+	time_t now = time(NULL);
+	struct tm *tick_time;
+	tick_time = localtime(&now);
+
+	handle_clock_tick(tick_time, MINUTE_UNIT);
+}
+
 /** is called every tick (every second if not low energy mode) */
 static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	charge_state = battery_state_service_peek();
@@ -267,7 +278,11 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	// print time
 	char *buffer = "00:00";
 
-	strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
+	if(USE_12_HOUR_FORMAT) {
+		strftime(buffer, sizeof("00:00"), "%I:%M", tick_time);
+	} else {
+		strftime(buffer, sizeof("00:00"), "%H:%M", tick_time);
+	}
 
 	text_layer_set_text(time_layer, buffer);
 
@@ -425,9 +440,13 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 static void on_configuration_handler_received(DictionaryIterator *received, void *context) {
 	Tuple *temp_metric = dict_find(received, CONFIGURATION_IDENT_TEMP_METRIC);
 	Tuple *show_battery = dict_find(received, CONFIGURATION_IDENT_SHOW_BATTERY);
+	Tuple *use_12hour = dict_find(received, CONFIGURATION_IDENT_USE_12HOUR_FORMAT);
 
 	TEMPERATURE_METRIC = temp_metric->value->int8;
 	SHOW_BATTERY = show_battery->value->int8;
+	USE_12_HOUR_FORMAT = use_12hour->value->int8 == 1;
+
+	force_clock_tick_update();
 }
 
 int main(void) {
