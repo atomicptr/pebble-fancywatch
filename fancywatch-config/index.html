@@ -55,6 +55,25 @@
 
 		</div>
 		<script>
+			$.extend({
+				getUrlVars: function() {
+					var vars = [], hash;
+					var hashes = window.location.href.slice(
+						window.location.href.indexOf('?') + 1).split('&');
+
+					for(var i = 0; i < hashes.length; i++) {
+						hash = hashes[i].split('=');
+						vars.push(hash[0]);
+						vars[hash[0]] = hash[1];
+					}
+
+					return vars;
+				},
+				getUrlVar: function(name){
+					return $.getUrlVars()[name];
+				}
+			});
+
 			function saveOptions() {
 				var options = {
 					"fezzes_are": "cool",
@@ -66,7 +85,41 @@
 				return options;
 			}
 
+			function setOptions() {
+				var temp_metric = $.getUrlVar("temp_metric");
+				var show_battery = $.getUrlVar("show_battery");
+				var use_12hour = $.getUrlVar("use_12hour");
+
+				if(temp_metric != undefined) {
+					var select = $("#temp-metric");
+
+					select.val(temp_metric).attr('selected', true).siblings('option').removeAttr('selected');
+
+					select.selectmenu();
+
+					select.selectmenu("refresh", true);
+				}
+
+				if(show_battery != undefined) {
+					var select = $("#show-battery");
+
+					select.val(show_battery).attr('selected', true).siblings('option').removeAttr('selected');
+
+					select.slider("refresh");
+				}
+
+				if(use_12hour != undefined) {
+					var select = $("#use-12hour");
+
+					select.val(use_12hour).attr('selected', true).siblings('option').removeAttr('selected');
+
+					select.slider("refresh");
+				}
+			}
+
 			$().ready(function() {
+				setOptions();
+
 				$("#button-cancel").click(function() {
 
 					console.log("Cancel");
