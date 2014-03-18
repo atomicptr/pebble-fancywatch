@@ -24,6 +24,7 @@ SECOND = 1000;
 MINUTE = SECOND * 60;
 
 WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather?lon={0}&lat={1}&mode=json";
+FW_CONFIG_URL = "http://stuff.kasoki.de/pebble/fancywatch-config/index.html";
 
 PEBBLE_EVENT_NEW_WEATHER_INFO = 0;
 PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
@@ -177,7 +178,32 @@ Pebble.addEventListener("ready", function(e) {
 
 Pebble.addEventListener("showConfiguration", function(e) {
 	console.log("FW - showing configuration");
-	Pebble.openURL('http://stuff.kasoki.de/pebble/fancywatch-config/index.html');
+
+	var options = JSON.parse(window.localStorage.getItem("fw_options"));
+
+	console.log("received options from localstorage: " + JSON.stringify(options));
+
+	var suffix = "";
+
+	if(options != null) {
+		suffix += "?";
+
+		var once = false;
+
+		for(var item in options) {
+			once = true;
+
+			suffix += item + "=" + options[item];
+			suffix += "&";
+		}
+
+		if(once) {
+			suffix.substring(0, suffix.length - 1);
+		}
+	}
+
+	console.log("FW - open config url: " + (FW_CONFIG_URL + suffix));
+	Pebble.openURL(FW_CONFIG_URL + suffix);
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
@@ -195,12 +221,25 @@ Pebble.addEventListener("webviewclosed", function(e) {
 			"use_12hour": Number(options.use_12hour)
 		};
 
+		// store options in local storage
+		var configs = {
+			"temp_metric": Number(options.temp_metric),
+			"show_battery": Number(options.show_battery),
+			"use_12hour": Number(options.use_12hour)
+		};
+
+		window.localStorage.setItem("fw_options", JSON.stringify(configs));
+
+		console.log("FW - stored options in localstorage: " + window.localStorage.getItem("fw_options"));
+
 		// send date to pebble
 		Pebble.sendAppMessage(pebble_data);
 		console.log("Send: " + JSON.stringify(pebble_data, 4) + " to pebble");
 
 		// force pebble to retrieve weather data again
 		clearTimeout(TIMEOUT_VAR);
+
+		// TODO: send cached last weather instead
 		get_location_and_show_weather();
 	}
 });
