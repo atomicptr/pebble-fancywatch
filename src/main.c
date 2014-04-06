@@ -119,7 +119,7 @@ static void init(void) {
 	SHOW_BATTERY = persist_exists(PERSIST_KEY_SHOW_BATTERY) ?
 		persist_read_int(PERSIST_KEY_SHOW_BATTERY) : BATTERY_SHOW;
 	USE_12_HOUR_FORMAT = persist_exists(PERSIST_KEY_USE_12_HOUR) ?
-		persist_read_bool(PERSIST_KEY_USE_12_HOUR) : false;
+		persist_read_bool(PERSIST_KEY_USE_12_HOUR) : clock_is_24h_style();
 
 	window = window_create();
 
