@@ -89,6 +89,17 @@
 				"name": "BATTERY_3",
 				"type": "png",
 				"file": "images/battery_3.png"
+			},
+			{
+				"type": "font",
+				"name": "FONT_ROBOTO_CONDENSED_21",
+				"file": "fonts/Roboto-Condensed.ttf"
+			},
+			{
+				"characterRegex": "[:0-9]",
+				"type": "font",
+				"name": "FONT_ROBOTO_BOLD_SUBSET_49",
+				"file": "fonts/Roboto-Bold.ttf"
 			}
 		]
 	}

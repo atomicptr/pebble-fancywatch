@@ -29,8 +29,8 @@
 #define NUMBER_OF_IMAGES 9
 
 #define TIME_POS_Y 25
-#define DATE_POS_Y TIME_POS_Y + 55
-#define WEATHER_POS_Y DATE_POS_Y + 25
+#define DATE_POS_Y TIME_POS_Y + 52
+#define WEATHER_POS_Y DATE_POS_Y + 33 // 28 (old value)
 
 const int WEATHER_IMAGE_RESOURCE_IDS[NUMBER_OF_IMAGES] = {
 	RESOURCE_ID_CLEAR_DAY,
@@ -181,7 +181,8 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(time_layer, GColorWhite);
 	text_layer_set_background_color(time_layer, GColorClear);
 
-	text_layer_set_font(time_layer, fonts_get_system_font(FONT_KEY_ROBOTO_BOLD_SUBSET_49));
+	text_layer_set_font(time_layer,
+		fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ROBOTO_BOLD_SUBSET_49)));
 
 	text_layer_set_text_alignment(time_layer, GTextAlignmentCenter);
 
@@ -198,7 +199,8 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(date_layer, GColorWhite);
 	text_layer_set_background_color(date_layer, GColorClear);
 
-	text_layer_set_font(date_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	text_layer_set_font(date_layer,
+		fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ROBOTO_CONDENSED_21)));
 
 	text_layer_set_text_alignment(date_layer, GTextAlignmentCenter);
 
@@ -215,7 +217,8 @@ static void window_load(Window *window) {
 	text_layer_set_text_color(temp_layer, GColorWhite);
 	text_layer_set_background_color(temp_layer, GColorClear);
 
-	text_layer_set_font(temp_layer, fonts_get_system_font(FONT_KEY_ROBOTO_CONDENSED_21));
+	text_layer_set_font(temp_layer,
+		fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_ROBOTO_CONDENSED_21)));
 
 	text_layer_set_text_alignment(temp_layer, GTextAlignmentLeft);
 
@@ -276,7 +279,7 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	}
 
 	// print time
-	char *buffer = "00:00";
+	static char buffer[] = "00:00";
 
 	if(USE_12_HOUR_FORMAT) {
 		strftime(buffer, sizeof("00:00"), "%I:%M", tick_time);
@@ -287,9 +290,11 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	text_layer_set_text(time_layer, buffer);
 
 	// print date
-	char *date_string = "XXX. XX. XXX.";
+	static char date_string[] = "XXX. XX. XXX.";
 
 	strftime(date_string, sizeof("XXX. XX. XXX."), "%a. %d. %b.", tick_time);
+
+	APP_LOG(APP_LOG_LEVEL_DEBUG, "current date: %s", date_string);
 
 	text_layer_set_text(date_layer, date_string);
 }
@@ -417,12 +422,12 @@ static void on_weather_handler_received(DictionaryIterator *received, void *cont
 	}
 
 	// set weather text
-	char *temp_string = "XXXXX";
+	static char temp_string[] = "XXXXX";
 
 	if(!error) {
 		snprintf(temp_string, sizeof("-1337°"), "%d°", temperature);
 	} else {
-		temp_string = "";
+		strcpy(temp_string, "");
 	}
 
 	text_layer_set_text(temp_layer, temp_string);
