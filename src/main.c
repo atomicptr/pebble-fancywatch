@@ -192,7 +192,7 @@ static void window_load(Window *window) {
 			0, DATE_POS_Y
 		},
 		.size = {
-			bounds.size.w, 23
+			bounds.size.w, 25
 		}
 	});
 
