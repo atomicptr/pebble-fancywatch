@@ -192,7 +192,7 @@ static void window_load(Window *window) {
 			0, DATE_POS_Y
 		},
 		.size = {
-			bounds.size.w, 22
+			bounds.size.w, 23
 		}
 	});
 
@@ -210,7 +210,7 @@ static void window_load(Window *window) {
 			bounds.size.w / 2 + 15, WEATHER_POS_Y + IMAGE_SIZE/2 - 11
 		},
 		.size = {
-			bounds.size.w / 2, 22
+			bounds.size.w / 2, 23
 		}
 	});
 
@@ -290,12 +290,10 @@ static void handle_clock_tick(struct tm *tick_time, TimeUnits units_changed) {
 	text_layer_set_text(time_layer, buffer);
 
 	// print date
-	static char date_string[] = "XXX. XX.XX";
+	static char date_string[] = "XXX. XX. XXX.";
+	int date_string_size = sizeof(date_string)/sizeof(date_string[0]);
 
-	// TODO: there seems to be a bug somewhere which doesn't let me use the letter "p" with
-	// text_layer_set_text(layer, string) -> which causes the layer to disappear in A"p"ril.
-	// so for now i'm using a number instead.
-	strftime(date_string, sizeof("XXX. XX.XX"), "%a. %d.%m", tick_time);
+	strftime(date_string, date_string_size, "%a. %d. %b.", tick_time);
 
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "current date: %s", date_string);
 
