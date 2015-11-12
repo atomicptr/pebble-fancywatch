@@ -1,40 +1,18 @@
-// Copyright (c) 2014 Christopher "Kasoki" Kaster
-//
-// This file is part of pebble-fancywatch <https://github.com/kasoki/pebble-fancywatch>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+var SECOND = 1000;
+var MINUTE = SECOND * 60;
 
-SECOND = 1000;
-MINUTE = SECOND * 60;
+var WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather?lon={0}&lat={1}&mode=json&appid=fe105672f9f6cb48e2d2e049448f5021";
+var FW_CONFIG_URL = "http://stuff.kasoki.de/pebble/fancywatch-config/index.html";
 
-WEATHER_API_URL = "http://api.openweathermap.org/data/2.5/weather?lon={0}&lat={1}&mode=json";
-FW_CONFIG_URL = "http://stuff.kasoki.de/pebble/fancywatch-config/index.html";
+var PEBBLE_EVENT_NEW_WEATHER_INFO = 0;
+var PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
 
-PEBBLE_EVENT_NEW_WEATHER_INFO = 0;
-PEBBLE_EVENT_CONFIGURATION_CHANGED = 1;
+var TIMEOUT_VAR = null;
 
-TIMEOUT_VAR = null;
+var LAST_WEATHER_INFO = {}
+var WEATHER_INFO_RECEIVED_ONCE = false;
 
-LAST_WEATHER_INFO = {}
-WEATHER_INFO_RECEIVED_ONCE = false;
-
-get_location_and_show_weather = function() {
+var get_location_and_show_weather = function() {
 	console.log("js: try to obtain location");
 
 	navigator.geolocation.getCurrentPosition(function(e) {
@@ -77,7 +55,7 @@ get_location_and_show_weather = function() {
 	});
 };
 
-get_weather = function(longitude, latitude) {
+var get_weather = function(longitude, latitude) {
 	var request_url = String.format(WEATHER_API_URL, longitude, latitude);
 
 	console.log("js: request weather info from: " + request_url);
@@ -113,7 +91,7 @@ get_weather = function(longitude, latitude) {
 	request.send(null);
 };
 
-get_icon_id = function(key) {
+var get_icon_id = function(key) {
 	switch(key) {
 		// clear_day
 		case "01d":
@@ -156,11 +134,11 @@ get_icon_id = function(key) {
 	}
 };
 
-convert_kelvin_to_celsius = function(kelvin) {
+var convert_kelvin_to_celsius = function(kelvin) {
 	return kelvin - 273.15;
 };
 
-convert_kelvin_to_fahrenheit = function(kelvin) {
+var convert_kelvin_to_fahrenheit = function(kelvin) {
 	return (kelvin * 1.8) - 459.67;
 };
 
